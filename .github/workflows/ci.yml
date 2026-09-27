@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.13"
+      - run: go vet ./...
+      - run: go test ./...
+
+  # main に入った変更だけを、承認を待ってから本番に配置する
+  deploy:
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.13"
+      - run: go build -o shop ./cmd/shop
+      - name: 本番に配置する
+        run: echo "shop（${GITHUB_SHA::7}）を本番に配置した（研修のデモのため、実際には配置しない）"
